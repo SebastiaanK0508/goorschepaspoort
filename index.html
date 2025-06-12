@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inburgerings Test (GOOR)</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="quiz-wrapper">
+    <h1>Goorsche Inburgeringstest 2025</h1>
+
+    <div id="startScreen">
+        <p>Welkom bij de Goorsche Inburgeringstest! Test jouw kennis van Goor en verdien misschien wel een certificaat!</p>
+        <div class="input-group">
+            <label for="userName">Vul je naam in:</label>
+            <input type="text" id="userName" placeholder="Je naam hier..." autocomplete="name">
+        </div>
+        <div class="input-group">
+            <label for="userDob">Vul je geboortedatum in:</label>
+            <input type="date" id="userDob">
+        </div>
+        <button id="startButton">Start Quiz</button>
+    </div>
+
+    <div id="quizContent" style="display:none;">
+        <div id="quizContainer">
+            </div>
+
+        <div id="feedback" class="feedback-message">
+            </div>
+
+        <div class="quiz-navigation">
+            <div id="progressBarContainer">
+                <div id="progressBar"></div>
+            </div>
+            <p id="progressText"></p>
+            <button id="nextButton" style="display:none;">Volgende vraag</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const questions = [
+            {
+                question: "Hoe komt Goor aan de naam 'Goor' ",
+                options: ["Door de 'vieze' inwoners", "Door poep op de stoep", "Door drassig moeras"],
+                answer: 2, // Index van het juiste antwoord
+                explanation: "De naam Goor is afgeleid van het Germaanse woord 'gôr', wat 'modderig' of 'drassig land' betekent. Dit verwijst naar het moerasachtige gebied waar Goor in ontstond."
+            },
+            {
+                question: "In welk jaar kreeg Goor stadsrechten",
+                options: ["1956", "1263", "1623"],
+                answer: 1,
+                explanation: "Goor kreeg in 1263 stadsrechten van de bisschop van Utrecht."
+            },
+            {
+                question: "Wat is voor Goor het 'enige' Geloof",
+                options: ["Islam", "Spaghetti Monster", "School en Volksfeest"],
+                answer: 2,
+                explanation: "Het 'School- en Volksfeest' is een diepgewortelde traditie in Goor, die de gemeenschap bij elkaar brengt, en wordt daarom gekscherend gezien als het 'enige' ware geloof."
+            },
+            {
+                question: "Wat viert Goor in 2025? ",
+                options: ["Het overlijden van UZ", "School en Volksfeest 150 jaar Jubileum", "School en Volksfeest 125 Jaar Jubileum"],
+                answer: 1,
+                explanation: "In 2025 viert Goor het 150-jarig jubileum van het School- en Volksfeest, een mijlpaal in de lokale geschiedenis."
+            },
+            {
+                question: "Wat is de naam van de gemeente waar Goor deel van uitmaakt?",
+                options: ["Hof van Twente", "Twenterand", "Wierden"],
+                answer: 0,
+                explanation: "Goor valt onder de gemeente Hof van Twente."
+            },
+            {
+                question: "Welke rivier stroomt door Goor?",
+                options: ["De Regge", "De IJssel", "De Twente"],
+                answer: 0,
+                explanation: "De Regge is de rivier die door Goor stroomt en een belangrijke rol speelt in het landschap."
+            },
+            {
+                question: "Wat is de belangrijkste industrie in de historie van Goor?",
+                options: ["Textielindustrie", "Voedingsindustrie", "Metaalindustrie"],
+                answer: 0,
+                explanation: "De textielindustrie was historisch gezien van groot belang voor de economie van Goor."
+            },
+            {
+                question: "Hoe heet het jaarlijkse evenement dat in Goor plaatsvindt?",
+                options: ["Hockey toernooi voor 85 plussers", "Goor School en Volksfeest", "Regge Festival"],
+                answer: 1,
+                explanation: "Het jaarlijkse 'Goor School en Volksfeest' is een hoogtepunt op de evenementenkalender."
+            },
+            {
+                question: "Hoe heet de straat wat door het centrum gaat?",
+                options: ["Gotestraat", "Grotestraat", "Goorsestraat"],
+                answer: 1,
+                explanation: "De Grotestraat is de belangrijkste winkelstraat en loopt dwars door het centrum van Goor."
+            },
+            {
+                question: "Welke sportclub hebben we NIET in Goor",
+                options: ["SV Hector", "VV Twenthe", "VV Twente"],
+                answer: 2,
+                explanation: "SV Hector en VV Twenthe zijn lokale sportclubs in Goor. VV Twente (met 'e' op het einde) is een club uit Enschede."
+            },
+            {
+                question: "Wie word in Goor gezien als Dorpsgek?",
+                options: ["Sammy", "Paultje Waanders", "De buurman van Aqua+"],
+                answer: 2,
+                explanation: "Dit is een ludieke vraag. Paultje Waanders is een bekende Goorse persoonlijkheid en de buurman van Aqua+ is een interne grap. Er is geen officiële 'dorpsgek' in Goor."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedAnswer = null;
+        let questionsShuffled = [];
+
+        const startScreen = document.getElementById('startScreen');
+        const userNameInput = document.getElementById('userName');
+        const userDobInput = document.getElementById('userDob');
+        const startButton = document.getElementById('startButton');
+        const quizContent = document.getElementById('quizContent');
+        const quizContainer = document.getElementById('quizContainer');
+        const nextButton = document.getElementById('nextButton');
+        const feedbackDiv = document.getElementById('feedback');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        // --- NAMED EVENT HANDLERS FOR NEXT BUTTON ---
+        // Functie voor de EERSTE klik op de 'Volgende' knop (controleert antwoord)
+        function handleCheckAnswerClick() {
+            if (selectedAnswer !== null) {
+                checkAnswer(); // Deze roept checkAnswer aan
+            } else {
+                alert("Kies een antwoord voordat je verder gaat.");
+            }
+        }
+
+        // Functie voor de TWEEDE klik op de 'Volgende' knop (gaat naar volgende vraag)
+        function handleMoveToNextQuestionClick() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+        // --- END NAMED EVENT HANDLERS ---
+
+
+        // Event listener voor de "Start Quiz" knop
+        if (startButton) {
+            startButton.addEventListener('click', () => {
+                const userName = userNameInput.value.trim();
+                const userDob = userDobInput.value;
+
+                if (!userName) {
+                    alert("Vul alsjeblieft je naam in om de quiz te starten.");
+                    userNameInput.focus();
+                    return;
+                }
+                if (!userDob) {
+                    alert("Vul alsjeblieft je geboortedatum in om de quiz te starten.");
+                    userDobInput.focus();
+                    return;
+                }
+
+                sessionStorage.setItem('quizUserName', userName);
+                sessionStorage.setItem('quizUserDob', userDob);
+
+                startScreen.style.display = 'none';
+                quizContent.style.display = 'block';
+                initQuiz();
+            });
+        } else {
+            console.error("Fout: De 'Start Quiz' knop (ID: startButton) is niet gevonden in de HTML.");
+        }
+
+
+        // BELANGRIJK: Koppel de initiële event listener voor de 'nextButton' EENMALIG hier.
+        // Hij zal in eerste instantie altijd verwijzen naar handleCheckAnswerClick.
+        if (nextButton) {
+            nextButton.addEventListener('click', handleCheckAnswerClick);
+        } else {
+             console.error("Fout: De 'Volgende vraag' knop (ID: nextButton) is niet gevonden in de HTML.");
+        }
+
+
+        // Functie om de quiz te initialiseren
+        function initQuiz() {
+            questionsShuffled = shuffleArray([...questions]);
+            loadQuestion();
+        }
+
+        // Functie om de vragen te shufflen
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Functie om een vraag te laden
+        function loadQuestion() {
+            quizContainer.innerHTML = '';
+            feedbackDiv.innerHTML = '';
+            feedbackDiv.className = 'feedback-message';
+            nextButton.style.display = 'none';
+
+            if (currentQuestionIndex < questionsShuffled.length) {
+                const questionData = questionsShuffled[currentQuestionIndex];
+
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.innerHTML = `<p>${currentQuestionIndex + 1}. ${questionData.question}</p>`;
+
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'options';
+
+                const shuffledOptions = questionData.options
+                    .map((option, index) => ({ option, originalIndex: index }))
+                    .sort(() => Math.random() - 0.5);
+
+                shuffledOptions.forEach((item) => { // Removed 'index' as it's not directly used for the button here
+                    const optionButton = document.createElement('button');
+                    optionButton.className = 'option-button';
+                    optionButton.textContent = item.option;
+                    optionButton.dataset.originalIndex = item.originalIndex;
+                    optionButton.addEventListener('click', () => selectOption(optionButton, item.originalIndex));
+                    optionsDiv.appendChild(optionButton);
+                });
+
+                questionDiv.appendChild(optionsDiv);
+                quizContainer.appendChild(questionDiv);
+
+                updateProgressBar();
+                selectedAnswer = null;
+                nextButton.textContent = 'Volgende vraag';
+
+                // Zorg ervoor dat de 'nextButton' de initiële handler heeft voor het controleren van antwoorden
+                nextButton.removeEventListener('click', handleMoveToNextQuestionClick); // Verwijder de 'volgende vraag' handler
+                nextButton.addEventListener('click', handleCheckAnswerClick);       // Voeg de 'controleer antwoord' handler toe
+
+            } else {
+                // Alle vragen beantwoord, stuur door naar de resultatenpagina
+                console.log('Alle vragen beantwoord. Doorsturen naar resultatenpagina.');
+                showResult();
+            }
+        }
+
+        // Functie om een optie te selecteren
+        function selectOption(button, originalIndex) {
+            document.querySelectorAll('.option-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            button.classList.add('selected');
+            selectedAnswer = originalIndex;
+            nextButton.style.display = 'block';
+        }
+
+        // Functie om het antwoord te controleren (geen uitleg meer)
+        function checkAnswer() {
+            const questionData = questionsShuffled[currentQuestionIndex];
+            const correctAnswerIndex = questionData.answer;
+
+            document.querySelectorAll('.option-button').forEach(btn => {
+                btn.disabled = true; // Deactiveer de knoppen
+            });
+
+            if (selectedAnswer === correctAnswerIndex) {
+                score++;
+                feedbackDiv.textContent = '✅ Juist!';
+                feedbackDiv.classList.add('correct');
+            } else {
+                feedbackDiv.textContent = `❌ Fout! Het juiste antwoord was: "${questionData.options[correctAnswerIndex]}".`;
+                feedbackDiv.classList.add('wrong');
+            }
+
+            // Na het controleren van het antwoord, verander de handler van de knop naar de volgende vraag
+            nextButton.removeEventListener('click', handleCheckAnswerClick); // Verwijder de 'controleer antwoord' handler
+            nextButton.addEventListener('click', handleMoveToNextQuestionClick); // Voeg de 'volgende vraag' handler toe
+        }
+
+        // Functie om naar de volgende vraag te gaan (na feedback)
+        function moveToNextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        // Functie om de voortgangsbalk bij te werken
+        function updateProgressBar() {
+            const percentage = (currentQuestionIndex / questionsShuffled.length) * 100;
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `Vraag ${currentQuestionIndex + 1} van ${questionsShuffled.length}`;
+        }
+
+        // Functie om het resultaat te tonen
+        function showResult() {
+            localStorage.setItem('lastQuizScore', score);
+            localStorage.setItem('totalQuizQuestions', questionsShuffled.length);
+
+            window.location.href = `result.html?score=${score}&total=${questionsShuffled.length}`;
+        }
+    }); // Einde van DOMContentLoaded event listener
+</script>
+
+</body>
+</html>

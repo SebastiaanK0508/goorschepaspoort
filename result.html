@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultaat Inburgerings Test</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="quiz-wrapper">
+    <h1>Jouw Resultaat</h1>
+    <p id="scoreDisplay" class="result-score"></p>
+    <p id="messageDisplay" class="result-message"></p>
+
+    <div id="certificateContainer" class="certificate-container" style="display:none;">
+        <h2>Certificaat van Inburgering Goor 2025</h2>
+        <p>Dit certificaat bevestigt dat</p>
+        <h3 id="participantName">[NAAM VAN DE DEELNEMER]</h3>
+        <p class="dob-display">Geboren op: <span id="userDobDisplay"></span></p>
+        <p>met succes de **Goorsche Inburgeringstest 2025** heeft afgelegd</p>
+        <p>en daarmee blijk heeft gegeven van uitzonderlijke kennis van Goor.</p>
+        <img src="wapengoor.png" alt="Goor Logo" class="certificate-logo">
+        <p class="signature">Namens de Goorsche Inburgeringscommissie</p>
+        <p class="date">Goor, <span id="currentDate"></span></p>
+    </div>
+
+    <div class="action-buttons">
+        <button id="printCertificateButton" class="action-button print-button" style="display:none;">Print Certificaat</button>
+        <button onclick="window.location.href='index.html'" class="action-button restart-button">Opnieuw beginnen</button>
+    </div>
+
+
+    <div class="highscore-section" style="margin-top: 30px;">
+        <h2>Hoogste Score</h2>
+        <p id="highScoreDisplay"></p>
+        <button onclick="resetHighScore()" class="reset-button" style="margin-top: 10px;">Hoogste Score Resetten</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        // Haal score en totaal aantal vragen op uit de URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const score = parseInt(urlParams.get('score'));
+        const totalQuestions = parseInt(urlParams.get('total'));
+
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const messageDisplay = document.getElementById('messageDisplay');
+        const certificateContainer = document.getElementById('certificateContainer');
+        const participantName = document.getElementById('participantName');
+        const userDobDisplay = document.getElementById('userDobDisplay'); // Reference for DOB display
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const currentDateSpan = document.getElementById('currentDate');
+        const printCertificateButton = document.getElementById('printCertificateButton'); // Reference for print button
+
+        // Haal de naam en geboortedatum van de gebruiker op uit sessionStorage
+        const userName = sessionStorage.getItem('quizUserName');
+        const userDob = sessionStorage.getItem('quizUserDob'); // Get the date of birth
+
+        if (userName) {
+            participantName.textContent = userName.toUpperCase(); // Toon de naam in hoofdletters
+        } else {
+            participantName.textContent = 'Onbekende Deelnemer'; // Fallback als geen naam is ingevuld
+        }
+
+        // Toon de geboortedatum op het certificaat (optioneel)
+        if (userDob && userDobDisplay) { // Check if userDobDisplay element exists
+            const dobDate = new Date(userDob + 'T00:00:00'); // Add T00:00:00 to avoid timezone issues
+            const dobOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            userDobDisplay.textContent = dobDate.toLocaleDateString('nl-NL', dobOptions);
+        } else if (userDobDisplay) { // If element exists but no DOB, show fallback
+            userDobDisplay.textContent = 'Onbekend';
+        }
+
+
+        // Vul de datum in het certificaat in
+        const today = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        currentDateSpan.textContent = today.toLocaleDateString('nl-NL', options);
+
+        scoreDisplay.textContent = `Je hebt ${score} van de ${totalQuestions} vragen goed beantwoord!`;
+
+        // Berichten op basis van de score
+        const percentage = (score / totalQuestions) * 100;
+        const requiredScoreForCertificate = 7; // Meer dan 7 vragen goed, dus >= 8
+
+        if (score > requiredScoreForCertificate) {
+            messageDisplay.textContent = 'Gefeliciteerd! Je bent een echte Goorsche kenner en hebt het certificaat verdiend!';
+            messageDisplay.classList.add('correct');
+            certificateContainer.style.display = 'block'; // Toon het certificaat
+            // Zorg ervoor dat de printknop alleen wordt getoond als deze bestaat en het certificaat wordt weergegeven
+            if (printCertificateButton) {
+                printCertificateButton.style.display = 'block';
+            }
+        } else if (percentage >= 50) {
+            messageDisplay.textContent = 'Goed gedaan! Je kent al veel van Goor.';
+            messageDisplay.classList.add('partial');
+        } else {
+            messageDisplay.textContent = 'Nog even oefenen om een Goorsche expert te worden!';
+            messageDisplay.classList.add('wrong');
+        }
+
+        // Highscore functionaliteit
+        function updateHighScore() {
+            let highScore = localStorage.getItem('goorQuizHighScore');
+            if (highScore === null || score > parseInt(highScore)) {
+                localStorage.setItem('goorQuizHighScore', score);
+                highScore = score;
+            }
+            highScoreDisplay.textContent = `Jouw hoogste score: ${highScore} van de ${totalQuestions}`;
+        }
+
+        function resetHighScore() {
+            localStorage.removeItem('goorQuizHighScore');
+            alert('Hoogste score is gereset!');
+            updateHighScore(); // Update de weergave
+        }
+
+        // Functie voor het printen van het certificaat
+        function printCertificate() {
+            const printWindow = window.open('', '_blank', 'height=600,width=800'); // Open in nieuwe tab
+            printWindow.document.write('<html><head><title>Print Certificaat</title>');
+            printWindow.document.write('<link rel="stylesheet" href="style.css">');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<div class="certificate-print-area">');
+            printWindow.document.write(certificateContainer.innerHTML); // Copy the certificate content
+            printWindow.document.write('</div></body></html>');
+            printWindow.document.close();
+
+            printWindow.onload = function() {
+                printWindow.focus();
+                printWindow.print();
+                // printWindow.close(); // Overweeg of je automatisch wilt sluiten of dat de gebruiker dit handmatig doet
+            };
+        }
+
+        // Voeg event listener toe aan de printknop (alleen als deze bestaat)
+        if (printCertificateButton) {
+            printCertificateButton.addEventListener('click', printCertificate);
+        }
+
+        // Roep highscore functie aan bij laden van de pagina
+        updateHighScore();
+
+        // Maak de resetHighScore functie globaal toegankelijk voor de onclick in HTML
+        window.resetHighScore = resetHighScore;
+    });
+</script>
+
+</body>
+</html>
